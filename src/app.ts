@@ -16,13 +16,18 @@ class Game {
     const square = new Shape("square", [[0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
     const straight = new Shape("straight", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [0, Math.floor(this.cols / 2) + 2]]);
     const T = new Shape("T", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)]]);
-    const L = new Shape("L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)]]);
+    const L = new Shape("L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) - 1]]);
     const skew = new Shape("skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
     const rev_L = new Shape("rev_L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) + 1]]);
-    const rev_skew = new Shape("rev_skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) - 1], [1, Math.floor(this.cols / 2)]]);
+    const rev_skew = new Shape("rev_skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) - 2], [1, Math.floor(this.cols / 2) - 1]]);
     this.shapeTypes = [square, straight, T, L, skew, rev_L, rev_skew];
 
     this.currentShape = this.randomShape();
+    this.currentShape.coords.forEach(((coord) => {
+      const [x, y] = coord;
+      this.currentShape.coordSet.add(JSON.stringify([x, y]));
+      this.grid[x][y] = "⬜️";
+    }));
     this.dropCurrentShape();
   }
 
@@ -41,36 +46,52 @@ class Game {
 
   private printGrid() {
     console.log("Current shape is: ", this.currentShape);
+    let prettyGrid = "";
     this.grid.forEach((row, i) => {
-      console.log(JSON.stringify(row).slice(1, -1));
+      row.forEach((value) => {
+        if (value === "⬜️") {
+          prettyGrid += value;
+        } else {
+          prettyGrid += ' ';
+        }
+      });
+      prettyGrid += '\n';
     });
+    console.log(prettyGrid);
   }
 
   public dropCurrentShape(): void {
     if (this.currentShape && this.grid) {
-      this.currentShape.coords.forEach(((coord) => {
-        const [x, y] = coord;
-        this.currentShape.coordSet.add(JSON.stringify([x, y]));
-      }));
       let newShapeRequired = false;
-      // Check for vertical boundary or collision with another block on next drop
-      // Collided block cannot belong to current shape
+      // Check for vertical boundary or collision
       this.currentShape.coords.forEach(((coord) => {
         const [x, y] = coord;
         if (this.isVerticalBoundary(x + 1) ||
-          (this.grid[x + 1][y] === "*" && !this.currentShape.coordSet.has(JSON.stringify([x + 1, y])))) {
-          console.log("NEW SHAPE REQUIRED");
+          (this.grid[x + 1][y] === "⬜️" && !this.currentShape.coordSet.has(JSON.stringify([x + 1, y])))) {
           newShapeRequired = true;
         }
       }));
       if (newShapeRequired) {
+        console.log("NEW SHAPE REQUIRED");
         this.currentShape = this.randomShape();
-      } else {
         this.currentShape.coords.forEach(((coord) => {
           const [x, y] = coord;
+          this.currentShape.coordSet.add(JSON.stringify([x, y]));
+          this.grid[x][y] = "⬜️";
+        }));
+      } else {
+        console.log("NO COLLISIONS")
+        this.currentShape.coords.forEach(((coord) => {
+          const [x, y] = coord;
+          // Remove previous occupied blocks
           this.grid[x][y] = "";
           this.currentShape.coordSet.delete(JSON.stringify([x, y]));
-          this.grid[x + 1][y] = "*";
+        }));
+        this.currentShape.coords.forEach(((coord, i) => {
+          const [x, y] = coord;
+          this.grid[x + 1][y] = "⬜️";
+          this.currentShape.coordSet.add(JSON.stringify([x + 1, y]));
+          this.currentShape.coords[i] = [x + 1, y];
         }));
       }
     }
