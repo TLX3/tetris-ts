@@ -1,32 +1,83 @@
 "use strict";
 class Game {
-    constructor(row, cols, grid, currentShape) {
-        this.row = row;
+    constructor(rows, cols) {
+        this.rows = rows;
         this.cols = cols;
-        this.grid = grid;
-        this.currentShape = currentShape;
-        this.row = n;
-        this.cols = m;
+        this.rows = rows;
+        this.cols = cols;
         const arr = [];
         for (let i = 0; i < n; i++) {
-            arr[i] = new Array(m);
+            arr[i] = new Array(m).fill("");
         }
         this.grid = arr;
-        this.currentShape = undefined;
+        // Tetrominoes
+        const square = new Shape("square", [[0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
+        const straight = new Shape("straight", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [0, Math.floor(this.cols / 2) + 2]]);
+        const T = new Shape("T", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)]]);
+        const L = new Shape("L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)]]);
+        const skew = new Shape("skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
+        const rev_L = new Shape("rev_L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) + 1]]);
+        const rev_skew = new Shape("rev_skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) - 1], [1, Math.floor(this.cols / 2)]]);
+        this.shapeTypes = [square, straight, T, L, skew, rev_L, rev_skew];
+        this.currentShape = this.randomShape();
+        this.dropCurrentShape();
+    }
+    randomShape() {
+        const randIdx = Math.floor(Math.random() * this.shapeTypes.length);
+        return this.shapeTypes[randIdx];
+    }
+    rotateCurrentShape() {
+    }
+    shiftCurrentShape() {
+    }
+    printGrid() {
+        console.log("Current shape is: ", this.currentShape);
+        this.grid.forEach((row, i) => {
+            console.log(JSON.stringify(row).slice(1, -1));
+        });
+    }
+    dropCurrentShape() {
+        if (this.currentShape && this.grid) {
+            let newShapeRequired = false;
+            // Check for vertical boundary or collision with another block on next drop
+            this.currentShape.coords.forEach(((coord) => {
+                const [x, y] = coord;
+                if (this.isVerticalBoundary(x + 1) || this.grid[x + 1][y] === "*") {
+                    console.log("NEW SHAPE REQUIRED");
+                    newShapeRequired = true;
+                }
+            }));
+            if (newShapeRequired) {
+                this.currentShape = this.randomShape();
+            }
+            else {
+                this.currentShape.coords.forEach(((coord) => {
+                    const [x, y] = coord;
+                    this.grid[x][y] = "";
+                    this.grid[x + 1][y] = "*";
+                }));
+            }
+        }
+        this.printGrid();
+    }
+    isVerticalBoundary(x) {
+        return x < 0 || x === this.rows;
+    }
+    isHorizontalBoundary(y) {
+        return y < 0 || y == this.cols;
     }
     start() {
-        const shapeTypes = [];
-        // Select random shape as currentShape
+        // Have a loop running that updates currentShape
+        // Update position of currentShape every second by descending one column below
+        // If collision occurs with an occupied block then 
+        // select random shape as currentShape
         // Shapes can be either a square, L, backwards L, |, z, backwards z, and T
         // Pick a random rotation out of 90, 180, 270, 360 degrees
-        // Update grid with coordinates of currentShape in the top centered by marking
-        // block as occupied with *
-        // Update position of currentShape every second by descending one column below
-        // If collision occurs with an occupied block then create a new currentShape
     }
 }
 class Shape {
-    constructor(coords) {
+    constructor(name, coords) {
+        this.name = name;
         this.coords = coords;
     }
 }
