@@ -27,7 +27,15 @@ class Game {
     });
   }
 
-  public rotateCurrentShape(): void {}
+  public rotateCurrentShape(): void {
+    // Transpose and reverse each row for a +90 degree rotation
+    for (let i = 0; i < this.currentShape.coords.length; i++) {
+      const [x, y] = this.currentShape.coords[i];
+      let temp = this.grid[x][y];
+      this.grid[x][y] = this.grid[y][x];
+      this.grid[y][x] = temp;
+    }
+  }
 
   public shiftCurrentShape(shiftDir: string): void {
     let [dx, dy] = [0, 0];
@@ -69,6 +77,7 @@ class Game {
         this.grid[x][y] = "";
         this.currentShape.coordSet.delete(JSON.stringify([x, y]));
       });
+      // Update grid, coord, and coordSet
       this.currentShape.coords.forEach((coord, i) => {
         const [x, y] = coord;
         this.grid[x + dx][y + dy] = "⬜️";
@@ -80,18 +89,19 @@ class Game {
 
   private printGrid() {
     let prettyGrid = "";
-    for (let i = 0; i < this.grid[0].length; i++) prettyGrid += "-";
-    this.grid.forEach((row, i) => {
-      row.forEach((value, i) => {
-        if (value === "⬜️") {
-          prettyGrid += value;
-        } else {
-          prettyGrid += " ";
-        }
-      });
+    const pad = function (val: string, len: number) {
+      let str = val;
+      while (str.length < len) {
+        str = " " + str;
+      }
+      return str;
+    };
+    for (let row of this.grid) {
+      for (let val of row) {
+        prettyGrid += pad(val, 2);
+      }
       prettyGrid += "\n";
-    });
-    for (let i = 0; i < this.grid[0].length; i++) prettyGrid += "-";
+    }
     process.stdout.clearLine(0);
     process.stdout.cursorTo(0);
     process.stdout.write(prettyGrid);
@@ -118,8 +128,7 @@ class Game {
         process.exit();
       }
     });
-    // Drop currentShape
-    // Then check for row filled
+    // Drop currentShape and check for row filled
     setInterval(() => {
       this.printGrid();
       this.shiftCurrentShape("down");
