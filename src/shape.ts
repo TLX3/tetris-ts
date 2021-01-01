@@ -1,0 +1,54 @@
+export class Shape {
+  public coordSet: Set<any>;
+  constructor(public name: string, public coords: number[][]) {
+    this.coordSet = new Set();
+  }
+}
+
+const cols = 12;
+
+// Tetrominoes
+const square = new Shape("square", [
+  [0, Math.floor(cols / 2)],
+  [0, Math.floor(cols / 2) + 1],
+  [1, Math.floor(cols / 2)],
+  [1, Math.floor(cols / 2) + 1],
+]);
+const straight = new Shape("straight", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [0, Math.floor(cols / 2) + 1],
+  [0, Math.floor(cols / 2) + 2],
+]);
+const T = new Shape("T", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [0, Math.floor(cols / 2) + 1],
+  [1, Math.floor(cols / 2)],
+]);
+const L = new Shape("L", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [0, Math.floor(cols / 2) + 1],
+  [1, Math.floor(cols / 2) - 1],
+]);
+const skew = new Shape("skew", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [1, Math.floor(cols / 2)],
+  [1, Math.floor(cols / 2) + 1],
+]);
+const rev_L = new Shape("rev_L", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [0, Math.floor(cols / 2) + 1],
+  [1, Math.floor(cols / 2) + 1],
+]);
+const rev_skew = new Shape("rev_skew", [
+  [0, Math.floor(cols / 2) - 1],
+  [0, Math.floor(cols / 2)],
+  [1, Math.floor(cols / 2) - 2],
+  [1, Math.floor(cols / 2) - 1],
+]);
+
+export const shapeTemplates = [square, straight, T, L, skew, rev_L, rev_skew];

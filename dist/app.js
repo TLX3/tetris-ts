@@ -1,89 +1,95 @@
 "use strict";
-const readline = require('readline');
+Object.defineProperty(exports, "__esModule", { value: true });
+const readline = require("readline");
+const shape_1 = require("./shape");
 class Game {
     constructor(rows, cols) {
         this.rows = rows;
         this.cols = cols;
         this.rows = rows;
         this.cols = cols;
-        const arr = [];
-        for (let i = 0; i < n; i++) {
-            arr[i] = new Array(m).fill("");
-        }
-        this.grid = arr;
-        // Tetrominoes
-        const square = new Shape("square", [[0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
-        const straight = new Shape("straight", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [0, Math.floor(this.cols / 2) + 2]]);
-        const T = new Shape("T", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2)]]);
-        const L = new Shape("L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) - 1]]);
-        const skew = new Shape("skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
-        const rev_L = new Shape("rev_L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) + 1]]);
-        const rev_skew = new Shape("rev_skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) - 2], [1, Math.floor(this.cols / 2) - 1]]);
-        this.shapeTemplates = [square, straight, T, L, skew, rev_L, rev_skew];
-        this.currentShape = square;
+        this.grid = new Array(n).fill([]).map(() => new Array(m).fill(""));
+        this.currentShape = shape_1.shapeTemplates[0];
         this.setCurrentShape();
     }
     setCurrentShape() {
         // Pick random shape from templates and create a clone
-        const randIdx = Math.floor(Math.random() * this.shapeTemplates.length);
-        const template = this.shapeTemplates[randIdx];
-        this.currentShape = new Shape(template.name, template.coords.map(coord => coord));
-        this.currentShape.coords.forEach(((coord) => {
+        const randIdx = Math.floor(Math.random() * shape_1.shapeTemplates.length);
+        const template = shape_1.shapeTemplates[randIdx];
+        this.currentShape = new shape_1.Shape(template.name, template.coords.map((coord) => coord));
+        this.currentShape.coords.forEach((coord) => {
             const [x, y] = coord;
             this.currentShape.coordSet.add(JSON.stringify([x, y]));
             this.grid[x][y] = "⬜️";
-        }));
-    }
-    rotateCurrentShape() {
-    }
-    shiftCurrentShape(shiftDir) {
-    }
-    printGrid() {
-        console.log("Current shape is: ", this.currentShape);
-        let prettyGrid = "";
-        this.grid.forEach((row, i) => {
-            row.forEach((value) => {
-                if (value === "⬜️") {
-                    prettyGrid += value;
-                }
-                else {
-                    prettyGrid += ' ';
-                }
-            });
-            prettyGrid += '\n';
         });
-        console.log(prettyGrid);
     }
-    dropCurrentShape() {
-        let newShapeRequired = false;
-        // Check for vertical boundary or collision
-        this.currentShape.coords.forEach(((coord) => {
-            const [x, y] = coord;
-            if (this.isVerticalBoundary(x + 1) ||
-                (this.grid[x + 1][y] === "⬜️" && !this.currentShape.coordSet.has(JSON.stringify([x + 1, y])))) {
-                newShapeRequired = true;
-            }
-        }));
-        if (newShapeRequired) {
-            console.log("NEW SHAPE REQUIRED");
-            this.setCurrentShape();
+    rotateCurrentShape() { }
+    shiftCurrentShape(shiftDir) {
+        let [dx, dy] = [0, 0];
+        switch (shiftDir) {
+            case "left":
+                dy = -1;
+                break;
+            case "right":
+                dy = 1;
+                break;
+            case "down":
+                dx = 1;
+                break;
+            default:
+                break;
         }
-        else {
-            console.log("NO COLLISIONS");
-            this.currentShape.coords.forEach(((coord) => {
+        let notPossibleMove = this.currentShape.coords.some((coord) => {
+            const [x, y] = coord;
+            return ((shiftDir === "down"
+                ? this.isVerticalBoundary(x + dx)
+                : this.isHorizontalBoundary(y + dy)) ||
+                (this.grid[x + dx][y + dy] === "⬜️" &&
+                    !this.currentShape.coordSet.has(JSON.stringify([x + dx, y + dy]))));
+        });
+        if (shiftDir === "down") {
+            // Check for vertical boundary or occupied block
+            if (notPossibleMove) {
+                // Cannot drop further with a boundary or occupied block
+                this.setCurrentShape();
+            }
+        }
+        if (!notPossibleMove) {
+            // Move is possible
+            this.currentShape.coords.forEach((coord) => {
                 const [x, y] = coord;
                 // Remove previous occupied blocks
                 this.grid[x][y] = "";
                 this.currentShape.coordSet.delete(JSON.stringify([x, y]));
-            }));
-            this.currentShape.coords.forEach(((coord, i) => {
+            });
+            this.currentShape.coords.forEach((coord, i) => {
                 const [x, y] = coord;
-                this.grid[x + 1][y] = "⬜️";
-                this.currentShape.coordSet.add(JSON.stringify([x + 1, y]));
-                this.currentShape.coords[i] = [x + 1, y];
-            }));
+                this.grid[x + dx][y + dy] = "⬜️";
+                this.currentShape.coordSet.add(JSON.stringify([x + dx, y + dy]));
+                this.currentShape.coords[i] = [x + dx, y + dy];
+            });
         }
-        this.printGrid();
+    }
+    printGrid() {
+        let prettyGrid = "";
+        for (let i = 0; i < this.grid[0].length; i++)
+            prettyGrid += "-";
+        this.grid.forEach((row, i) => {
+            row.forEach((value, i) => {
+                if (value === "⬜️") {
+                    prettyGrid += value;
+                }
+                else {
+                    prettyGrid += " ";
+                }
+            });
+            prettyGrid += "\n";
+        });
+        for (let i = 0; i < this.grid[0].length; i++)
+            prettyGrid += "-";
+        process.stdout.clearLine(0);
+        process.stdout.cursorTo(0);
+        process.stdout.write(prettyGrid);
     }
     isVerticalBoundary(x) {
         return x < 0 || x === this.rows;
@@ -95,11 +101,11 @@ class Game {
         // Continually listen for user's keypress to shift or rotate currentShape
         readline.emitKeypressEvents(process.stdin);
         process.stdin.setRawMode(true);
-        process.stdin.on('keypress', (str, key) => {
+        process.stdin.on("keypress", (str, key) => {
             if (key.name === "up") {
                 this.rotateCurrentShape();
             }
-            else if (['left', 'right', 'down'].includes(key.name)) {
+            else if (["left", "right", "down"].includes(key.name)) {
                 this.shiftCurrentShape(key.name);
             }
             else {
@@ -107,18 +113,11 @@ class Game {
             }
         });
         // Drop currentShape
-        // Then check for row clearance
+        // Then check for row filled
         setInterval(() => {
-            this.dropCurrentShape();
+            this.printGrid();
+            this.shiftCurrentShape("down");
         }, 1000);
-        // Pick a random rotation out of 90, 180, 270, 360 degrees
-    }
-}
-class Shape {
-    constructor(name, coords) {
-        this.name = name;
-        this.coords = coords;
-        this.coordSet = new Set();
     }
 }
 // Create Game Object with n x m grid
