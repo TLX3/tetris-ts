@@ -8,6 +8,7 @@ export class Shape {
 const cols = 12;
 
 // Tetrominoes
+// TODO: Refactor shape generation
 const square = new Shape("square", [
   [0, Math.floor(cols / 2)],
   [0, Math.floor(cols / 2) + 1],
