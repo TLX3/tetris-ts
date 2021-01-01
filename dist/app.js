@@ -1,4 +1,5 @@
 "use strict";
+const readline = require('readline');
 class Game {
     constructor(rows, cols) {
         this.rows = rows;
@@ -18,22 +19,24 @@ class Game {
         const skew = new Shape("skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) + 1]]);
         const rev_L = new Shape("rev_L", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [0, Math.floor(this.cols / 2) + 1], [1, Math.floor(this.cols / 2) + 1]]);
         const rev_skew = new Shape("rev_skew", [[0, Math.floor(this.cols / 2) - 1], [0, Math.floor(this.cols / 2)], [1, Math.floor(this.cols / 2) - 2], [1, Math.floor(this.cols / 2) - 1]]);
-        this.shapeTypes = [square, straight, T, L, skew, rev_L, rev_skew];
-        this.currentShape = this.randomShape();
+        this.shapeTemplates = [square, straight, T, L, skew, rev_L, rev_skew];
+        this.currentShape = square;
+        this.setCurrentShape();
+    }
+    setCurrentShape() {
+        // Pick random shape from templates and create a clone
+        const randIdx = Math.floor(Math.random() * this.shapeTemplates.length);
+        const template = this.shapeTemplates[randIdx];
+        this.currentShape = new Shape(template.name, template.coords.map(coord => coord));
         this.currentShape.coords.forEach(((coord) => {
             const [x, y] = coord;
             this.currentShape.coordSet.add(JSON.stringify([x, y]));
             this.grid[x][y] = "⬜️";
         }));
-        this.dropCurrentShape();
-    }
-    randomShape() {
-        const randIdx = Math.floor(Math.random() * this.shapeTypes.length);
-        return this.shapeTypes[randIdx];
     }
     rotateCurrentShape() {
     }
-    shiftCurrentShape() {
+    shiftCurrentShape(shiftDir) {
     }
     printGrid() {
         console.log("Current shape is: ", this.currentShape);
@@ -52,40 +55,33 @@ class Game {
         console.log(prettyGrid);
     }
     dropCurrentShape() {
-        if (this.currentShape && this.grid) {
-            let newShapeRequired = false;
-            // Check for vertical boundary or collision
+        let newShapeRequired = false;
+        // Check for vertical boundary or collision
+        this.currentShape.coords.forEach(((coord) => {
+            const [x, y] = coord;
+            if (this.isVerticalBoundary(x + 1) ||
+                (this.grid[x + 1][y] === "⬜️" && !this.currentShape.coordSet.has(JSON.stringify([x + 1, y])))) {
+                newShapeRequired = true;
+            }
+        }));
+        if (newShapeRequired) {
+            console.log("NEW SHAPE REQUIRED");
+            this.setCurrentShape();
+        }
+        else {
+            console.log("NO COLLISIONS");
             this.currentShape.coords.forEach(((coord) => {
                 const [x, y] = coord;
-                if (this.isVerticalBoundary(x + 1) ||
-                    (this.grid[x + 1][y] === "⬜️" && !this.currentShape.coordSet.has(JSON.stringify([x + 1, y])))) {
-                    newShapeRequired = true;
-                }
+                // Remove previous occupied blocks
+                this.grid[x][y] = "";
+                this.currentShape.coordSet.delete(JSON.stringify([x, y]));
             }));
-            if (newShapeRequired) {
-                console.log("NEW SHAPE REQUIRED");
-                this.currentShape = this.randomShape();
-                this.currentShape.coords.forEach(((coord) => {
-                    const [x, y] = coord;
-                    this.currentShape.coordSet.add(JSON.stringify([x, y]));
-                    this.grid[x][y] = "⬜️";
-                }));
-            }
-            else {
-                console.log("NO COLLISIONS");
-                this.currentShape.coords.forEach(((coord) => {
-                    const [x, y] = coord;
-                    // Remove previous occupied blocks
-                    this.grid[x][y] = "";
-                    this.currentShape.coordSet.delete(JSON.stringify([x, y]));
-                }));
-                this.currentShape.coords.forEach(((coord, i) => {
-                    const [x, y] = coord;
-                    this.grid[x + 1][y] = "⬜️";
-                    this.currentShape.coordSet.add(JSON.stringify([x + 1, y]));
-                    this.currentShape.coords[i] = [x + 1, y];
-                }));
-            }
+            this.currentShape.coords.forEach(((coord, i) => {
+                const [x, y] = coord;
+                this.grid[x + 1][y] = "⬜️";
+                this.currentShape.coordSet.add(JSON.stringify([x + 1, y]));
+                this.currentShape.coords[i] = [x + 1, y];
+            }));
         }
         this.printGrid();
     }
@@ -96,11 +92,25 @@ class Game {
         return y < 0 || y == this.cols;
     }
     start() {
-        // Have a loop running that updates currentShape
-        // Update position of currentShape every second by descending one column below
-        // If collision occurs with an occupied block then 
-        // select random shape as currentShape
-        // Shapes can be either a square, L, backwards L, |, z, backwards z, and T
+        // Continually listen for user's keypress to shift or rotate currentShape
+        readline.emitKeypressEvents(process.stdin);
+        process.stdin.setRawMode(true);
+        process.stdin.on('keypress', (str, key) => {
+            if (key.name === "up") {
+                this.rotateCurrentShape();
+            }
+            else if (['left', 'right', 'down'].includes(key.name)) {
+                this.shiftCurrentShape(key.name);
+            }
+            else {
+                process.exit();
+            }
+        });
+        // Drop currentShape
+        // Then check for row clearance
+        setInterval(() => {
+            this.dropCurrentShape();
+        }, 1000);
         // Pick a random rotation out of 90, 180, 270, 360 degrees
     }
 }
@@ -116,3 +126,4 @@ const n = 24;
 const m = 12;
 const game = new Game(n, m);
 game.start();
+//# sourceMappingURL=app.js.map
