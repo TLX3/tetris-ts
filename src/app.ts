@@ -29,11 +29,29 @@ class Game {
 
   public rotateCurrentShape(): void {
     // Transpose and reverse each row for a +90 degree rotation
-    for (let i = 0; i < this.currentShape.coords.length; i++) {
-      const [x, y] = this.currentShape.coords[i];
-      let temp = this.grid[x][y];
-      this.grid[x][y] = this.grid[y][x];
-      this.grid[y][x] = temp;
+    const notPossibleRotation = this.currentShape.coords.some((coord) => {
+      const [x, y] = coord;
+      return (
+        this.isHorizontalBoundary(x) ||
+        this.isVerticalBoundary(y) ||
+        (this.grid[y][x] === "⬜️" &&
+          !this.currentShape.coordSet.has(JSON.stringify([y, x])))
+      );
+    });
+    // Rotation is possible?
+    if (!notPossibleRotation) {
+      // this.currentShape.coords.forEach((coord) => {
+      //   const [x, y] = coord;
+      //   // Remove previous occupied blocks
+      //   this.grid[x][y] = "";
+      //   this.currentShape.coordSet.delete(JSON.stringify([x, y]));
+      // });
+      // this.currentShape.coords.forEach((coord, i) => {
+      //   const [x, y] = coord;
+      //   this.grid[y][x] = "⬜️";
+      //   this.currentShape.coordSet.add(JSON.stringify([y, x]));
+      //   this.currentShape.coords[i] = [y, x];
+      // });
     }
   }
 
